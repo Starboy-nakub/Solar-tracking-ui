@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>SOLAR TRACKING - Starboy</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
 body{
   margin:0;
@@ -17,6 +18,8 @@ canvas#stars{
   top:0;left:0;
   z-index:-1;
 }
+
+/* Splash */
 #splash{
   position:fixed;
   top:0;left:0;
@@ -29,8 +32,11 @@ canvas#stars{
   align-items:center;
   z-index:9999;
 }
+
+/* App */
 .app{
-  width:420px;
+  width:90%;
+  max-width:1000px;
   margin:auto;
   margin-top:20px;
   background:#020617;
@@ -38,35 +44,86 @@ canvas#stars{
   box-shadow:0 0 30px cyan;
   overflow:hidden;
 }
+
 .header{
   text-align:center;
-  padding:15px;
+  padding:12px;
   font-size:22px;
   font-weight:bold;
   background:linear-gradient(90deg,#38bdf8,#22d3ee);
   color:black;
 }
-.subheader{
-  font-size:14px;
+.subheader{font-size:14px}
+
+/* Main layout */
+.main{
+  display:flex;
+  gap:20px;
+  padding:15px;
 }
+
+/* Radar */
 .panel-area{
+  flex:1;
   display:flex;
   justify-content:center;
-  margin:15px;
+  align-items:center;
 }
 .panel{
-  width:150px;
-  height:90px;
-  background:linear-gradient(135deg,#3b82f6,#0ea5e9);
-  border-radius:10px;
-  box-shadow:0 0 20px cyan;
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  border:3px solid cyan;
+  box-shadow:0 0 25px cyan;
+  background:
+    radial-gradient(circle at center, rgba(0,255,255,0.15), transparent 70%),
+    repeating-radial-gradient(circle at center, rgba(0,255,255,0.2) 0 2px, transparent 2px 40px);
+  position:relative;
   transition:0.5s;
 }
+
+/* cross lines */
+.panel::before,
+.panel::after{
+  content:"";
+  position:absolute;
+  background:rgba(0,255,255,0.4);
+}
+.panel::before{width:100%;height:1px;top:50%;left:0;}
+.panel::after{height:100%;width:1px;left:50%;top:0;}
+
+/* Directions */
+.dir{
+  position:absolute;
+  font-weight:bold;
+  color:cyan;
+  text-shadow:0 0 5px cyan;
+}
+.north{ top:5px; left:50%; transform:translateX(-50%); }
+.south{ bottom:5px; left:50%; transform:translateX(-50%); }
+.east{ right:5px; top:50%; transform:translateY(-50%); }
+.west{ left:5px; top:50%; transform:translateY(-50%); }
+
+/* Sun icon */
+.sun{
+  position:absolute;
+  top:50%;
+  left:50%;
+  font-size:26px;
+  color:gold;
+  text-shadow:0 0 10px gold;
+  transform-origin: -70px center;
+}
+
+/* Right side */
+.right{ flex:2; }
+
+/* Cards */
 .cards{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
-  padding:10px;
+  margin-bottom:10px;
 }
 .card{
   border:1px solid cyan;
@@ -87,11 +144,13 @@ canvas#stars{
   width:50%;
   background:cyan;
 }
+
+/* Controls */
 .controls{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr 1fr 1fr;
   gap:10px;
-  padding:15px;
+  margin-top:10px;
 }
 button{
   padding:12px;
@@ -103,22 +162,29 @@ button{
   box-shadow:0 0 10px cyan;
 }
 .auto{
-  grid-column:span 2;
+  grid-column:span 3;
   background:gold;
   box-shadow:0 0 10px gold;
 }
+
 .footer{
   text-align:center;
   font-size:12px;
   padding:8px;
   color:#94a3b8;
 }
+
+/* Responsive */
+@media (max-width:768px){
+  .main{flex-direction:column;}
+  .controls{grid-template-columns:1fr 1fr;}
+  .auto{grid-column:span 2;}
+}
 </style>
 </head>
 
 <body>
 
-<!-- Splash Screen -->
 <div id="splash">
   <h1>☀ SOLAR TRACKING</h1>
   <h3>RITTIYAWANNALAI</h3>
@@ -134,38 +200,50 @@ button{
     <div class="subheader">RITTIYAWANNALAI • Team Starboy ⭐</div>
   </div>
 
-  <div class="panel-area">
-    <div class="panel" id="panel"></div>
-  </div>
-
-  <div class="cards">
-    <div class="card">Angle<br><b id="angleText">0°</b></div>
-    <div class="card">
-      Light<br><b id="lightText">50%</b>
-      <div class="progress"><div class="bar" id="lightBar"></div></div>
+  <div class="main">
+    <!-- Radar -->
+    <div class="panel-area">
+      <div class="panel" id="panel">
+        <div class="sun" id="sun">☀</div>
+        <div class="dir north">N</div>
+        <div class="dir east">E</div>
+        <div class="dir south">S</div>
+        <div class="dir west">W</div>
+      </div>
     </div>
-    <div class="card">Voltage<br><b>12.5 V</b></div>
-    <div class="card">Current<br><b>1.8 A</b></div>
-  </div>
 
-  <canvas id="chart" height="120"></canvas>
+    <!-- Right -->
+    <div class="right">
+      <div class="cards">
+        <div class="card">Angle<br><b id="angleText">0°</b></div>
+        <div class="card">
+          Light<br><b id="lightText">50%</b>
+          <div class="progress"><div class="bar" id="lightBar"></div></div>
+        </div>
+        <div class="card">Voltage<br><b>12.5 V</b></div>
+        <div class="card">Current<br><b>1.8 A</b></div>
+      </div>
 
-  <div class="controls">
-    <button onclick="rotateLeft()">⬅ LEFT</button>
-    <button onclick="rotateRight()">RIGHT ➡</button>
-    <button class="auto" onclick="autoRotate()">AUTO MODE</button>
+      <canvas id="chart" height="120"></canvas>
+
+      <div class="controls">
+        <button onclick="rotateLeft()">⬅ LEFT</button>
+        <button onclick="rotateRight()">RIGHT ➡</button>
+        <button class="auto" onclick="autoRotate()">AUTO MODE</button>
+      </div>
+    </div>
   </div>
 
   <div class="footer">Solar Tracking Project • Team Starboy</div>
 </div>
 
 <script>
-// Splash Screen
+// Splash
 setTimeout(()=>{
   document.getElementById("splash").style.display="none";
 },2000);
 
-// Stars background
+// Stars
 const canvas=document.getElementById("stars");
 const ctx=canvas.getContext("2d");
 canvas.width=window.innerWidth;
@@ -188,14 +266,16 @@ function animateStars(){
 }
 animateStars();
 
-// Panel control
+// Control
 let angle=0;
 let auto=false;
 let interval;
 
 function update(){
   document.getElementById("panel").style.transform="rotate("+angle+"deg)";
+  document.getElementById("sun").style.transform="rotate("+angle+"deg)";
   document.getElementById("angleText").innerText=angle+"°";
+
   let light=Math.abs(angle)%100;
   document.getElementById("lightText").innerText=light+"%";
   document.getElementById("lightBar").style.width=light+"%";
