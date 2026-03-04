@@ -13,7 +13,8 @@ body{
   color:white;
 }
 #splash{
-  position:fixed; inset:0;
+  position:fixed;
+  inset:0;
   background:black;
   display:flex;
   flex-direction:column;
@@ -21,14 +22,16 @@ body{
   align-items:center;
   z-index:9999;
 }
+
 .app{
   width:90%;
-  max-width:1200px;
+  max-width:1100px;
   margin:20px auto;
   background:#020617;
   border-radius:25px;
   box-shadow:0 0 30px cyan;
 }
+
 .header{
   text-align:center;
   padding:12px;
@@ -39,6 +42,7 @@ body{
 }
 .subheader{font-size:14px}
 
+/* Layout */
 .main{
   display:flex;
   gap:20px;
@@ -53,15 +57,15 @@ body{
   align-items:center;
 }
 .panel{
-  width:230px;
-  height:230px;
+  width:220px;
+  height:220px;
   border-radius:50%;
   border:3px solid cyan;
-  position:relative;
+  box-shadow:0 0 25px cyan;
   background:
     radial-gradient(circle at center, rgba(0,255,255,0.15), transparent 70%),
     repeating-radial-gradient(circle at center, rgba(0,255,255,0.2) 0 2px, transparent 2px 40px);
-  transition:0.5s;
+  position:relative;
 }
 .panel::before,.panel::after{
   content:"";
@@ -87,14 +91,15 @@ body{
   left:50%;
   font-size:28px;
   color:gold;
-  transform-origin:-80px center;
+  transform-origin:-70px center;
 }
 
-/* Right */
+/* Right side */
 .right{flex:2;}
+
 .cards{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns:1fr 1fr;
   gap:10px;
 }
 .card{
@@ -128,8 +133,12 @@ button{
   cursor:pointer;
   background:cyan;
 }
-.auto{grid-column:span 3; background:gold;}
+.auto{
+  grid-column:span 3;
+  background:gold;
+}
 
+/* Table */
 .table-area{
   margin:15px;
   max-height:200px;
@@ -145,8 +154,11 @@ th,td{
   padding:5px;
   text-align:center;
 }
-th{background:#022c44;}
+th{
+  background:#022c44;
+}
 
+/* Footer */
 .footer{
   text-align:center;
   font-size:12px;
@@ -177,6 +189,7 @@ th{background:#022c44;}
   </div>
 
   <div class="main">
+    <!-- Radar -->
     <div class="panel-area">
       <div class="panel" id="panel">
         <div class="sun" id="sun">☀</div>
@@ -187,16 +200,24 @@ th{background:#022c44;}
       </div>
     </div>
 
+    <!-- Right -->
     <div class="right">
       <div class="cards">
         <div class="card">Date<br><b id="dateText"></b></div>
         <div class="card">Time<br><b id="timeText"></b></div>
         <div class="card">Angle<br><b id="angleText">0°</b></div>
         <div class="card">Direction<br><b id="dirText">North</b></div>
-        <div class="card">Light<br><b id="lightText">0 lux</b>
+
+        <div class="card">
+          Light<br><b id="lightText">0 lux</b>
           <div class="progress"><div class="bar" id="lightBar"></div></div>
         </div>
-        <div class="card">MAX Lux<br><b id="maxLux">0</b></div>
+
+        <div class="card">Peak Record Lux<br><b id="peakLux">0 lux</b></div>
+
+        <div class="card">Sun Position<br><b id="sunPosText">(0 , 0)</b></div>
+
+        <div class="card">Voltage<br><b>12.5 V</b></div>
       </div>
 
       <canvas id="chart" height="120"></canvas>
@@ -209,15 +230,16 @@ th{background:#022c44;}
     </div>
   </div>
 
+  <!-- Data Logger Table -->
   <div class="table-area">
     <table>
       <thead>
         <tr>
           <th>No</th>
           <th>Time</th>
-          <th>Angle</th>
-          <th>Dir</th>
-          <th>Lux</th>
+          <th>Angle (°)</th>
+          <th>Direction</th>
+          <th>Light (lux)</th>
         </tr>
       </thead>
       <tbody id="logTable"></tbody>
@@ -227,30 +249,23 @@ th{background:#022c44;}
   <div class="footer">Solar Tracking Project • Team Starboy</div>
 </div>
 
-<!-- Sound -->
-<audio id="beep" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-
 <script>
 setTimeout(()=>{splash.style.display="none";},2000);
 
-const MAX_LUX=900000;
-let angle=0;
-let auto=false;
-let interval;
-let logCount=0;
-let peakLux=0;
-
+// Clock
 function updateTime(){
   const now=new Date();
   timeText.innerText=now.toLocaleTimeString();
   dateText.innerText=now.toLocaleDateString();
-
-  // Sun position by time
-  const hour=now.getHours()+now.getMinutes()/60;
-  angle = (hour/24)*360;
-  update();
 }
 setInterval(updateTime,1000);
+
+let angle=0;
+let auto=false;
+let interval;
+let logCount=0;
+const MAX_LUX=900000;
+let peakLuxValue=0;
 
 function getDirection(a){
   a=(a%360+360)%360;
@@ -260,58 +275,65 @@ function getDirection(a){
   return "North";
 }
 
-function playSound(){
-  document.getElementById("beep").play();
-}
-
 function update(){
   panel.style.transform="rotate("+angle+"deg)";
   sun.style.transform="rotate("+angle+"deg)";
-  angleText.innerText=angle.toFixed(0)+"°";
+  angleText.innerText=angle+"°";
 
   let lux=Math.floor((Math.abs(angle)%360)/360*MAX_LUX);
   lightText.innerText=lux+" lux";
   lightBar.style.width=(lux/MAX_LUX*100)+"%";
 
-  // Glow color
-  panel.style.boxShadow=`0 0 ${lux/20000}px gold`;
-
   let dir=getDirection(angle);
   dirText.innerText=dir;
 
-  if(lux>peakLux){
-    peakLux=lux;
-    maxLux.innerText=peakLux+" lux";
+  // Sun Position (X,Y)
+  const radius = 70;
+  const rad = angle * Math.PI / 180;
+  const x = Math.round(Math.cos(rad) * radius);
+  const y = Math.round(Math.sin(rad) * radius);
+  sunPosText.innerText = `(${x} , ${y})`;
+
+  // Peak record
+  if(lux > peakLuxValue){
+    peakLuxValue = lux;
+    peakLux.innerText = peakLuxValue + " lux";
   }
 
   addData(lux);
   addLog(lux,dir);
 }
 
-function rotateLeft(){angle-=10;playSound();update();}
-function rotateRight(){angle+=10;playSound();update();}
+function rotateLeft(){angle-=10;update();}
+function rotateRight(){angle+=10;update();}
 
 function autoRotate(){
-  if(auto){clearInterval(interval);auto=false;}
-  else{
+  if(auto){
+    clearInterval(interval);
+    auto=false;
+  } else {
     auto=true;
-    interval=setInterval(()=>{
-      angle+=5;
-      playSound();
-      update();
-    },500);
+    interval=setInterval(()=>{angle+=5;update();},500);
   }
 }
 
 // Chart
 const chart=new Chart(document.getElementById("chart"),{
   type:"line",
-  data:{labels:[],datasets:[{label:"Light (lux)",data:[],borderColor:"cyan",tension:0.3}]},
+  data:{
+    labels:[],
+    datasets:[{
+      label:"Light (lux)",
+      data:[],
+      borderColor:"cyan",
+      tension:0.3
+    }]
+  },
   options:{scales:{y:{min:0,max:900000}}}
 });
 
 function addData(val){
-  if(chart.data.labels.length>15){
+  if(chart.data.labels.length>12){
     chart.data.labels.shift();
     chart.data.datasets[0].data.shift();
   }
@@ -320,6 +342,7 @@ function addData(val){
   chart.update();
 }
 
+// Data Logger
 function addLog(lux,dir){
   logCount++;
   const now=new Date();
@@ -327,7 +350,7 @@ function addLog(lux,dir){
   row.innerHTML=`
     <td>${logCount}</td>
     <td>${now.toLocaleTimeString()}</td>
-    <td>${angle.toFixed(0)}</td>
+    <td>${angle}</td>
     <td>${dir}</td>
     <td>${lux}</td>
   `;
