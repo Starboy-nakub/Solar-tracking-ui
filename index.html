@@ -10,35 +10,28 @@ body{
   margin:0;
   font-family:Arial, sans-serif;
   background:black;
-  overflow:hidden;
   color:white;
-}
-canvas#stars{
-  position:fixed;
-  top:0;left:0;
-  z-index:-1;
 }
 #splash{
   position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
+  inset:0;
   background:black;
-  color:white;
   display:flex;
   flex-direction:column;
   justify-content:center;
   align-items:center;
   z-index:9999;
 }
+
 .app{
   width:90%;
-  max-width:1000px;
-  margin:auto;
-  margin-top:20px;
+  max-width:1100px;
+  margin:20px auto;
   background:#020617;
   border-radius:25px;
   box-shadow:0 0 30px cyan;
 }
+
 .header{
   text-align:center;
   padding:12px;
@@ -49,6 +42,7 @@ canvas#stars{
 }
 .subheader{font-size:14px}
 
+/* Layout */
 .main{
   display:flex;
   gap:20px;
@@ -72,10 +66,8 @@ canvas#stars{
     radial-gradient(circle at center, rgba(0,255,255,0.15), transparent 70%),
     repeating-radial-gradient(circle at center, rgba(0,255,255,0.2) 0 2px, transparent 2px 40px);
   position:relative;
-  transition:0.5s;
 }
-.panel::before,
-.panel::after{
+.panel::before,.panel::after{
   content:"";
   position:absolute;
   background:rgba(0,255,255,0.4);
@@ -83,7 +75,6 @@ canvas#stars{
 .panel::before{width:100%;height:1px;top:50%;}
 .panel::after{height:100%;width:1px;left:50%;}
 
-/* Directions */
 .dir{
   position:absolute;
   font-weight:bold;
@@ -103,7 +94,8 @@ canvas#stars{
   transform-origin:-70px center;
 }
 
-.right{ flex:2; }
+/* Right side */
+.right{flex:2;}
 
 .cards{
   display:grid;
@@ -126,10 +118,12 @@ canvas#stars{
   background:cyan;
 }
 
+/* Controls */
 .controls{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
   gap:10px;
+  margin-top:10px;
 }
 button{
   padding:12px;
@@ -143,11 +137,39 @@ button{
   grid-column:span 3;
   background:gold;
 }
+
+/* Table */
+.table-area{
+  margin:15px;
+  max-height:200px;
+  overflow-y:auto;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:12px;
+}
+th,td{
+  border:1px solid cyan;
+  padding:5px;
+  text-align:center;
+}
+th{
+  background:#022c44;
+}
+
+/* Footer */
 .footer{
   text-align:center;
   font-size:12px;
   padding:8px;
   color:#94a3b8;
+}
+
+@media(max-width:768px){
+  .main{flex-direction:column;}
+  .controls{grid-template-columns:1fr 1fr;}
+  .auto{grid-column:span 2;}
 }
 </style>
 </head>
@@ -167,6 +189,7 @@ button{
   </div>
 
   <div class="main">
+    <!-- Radar -->
     <div class="panel-area">
       <div class="panel" id="panel">
         <div class="sun" id="sun">☀</div>
@@ -177,6 +200,7 @@ button{
       </div>
     </div>
 
+    <!-- Right -->
     <div class="right">
       <div class="cards">
         <div class="card">Date<br><b id="dateText"></b></div>
@@ -199,27 +223,44 @@ button{
     </div>
   </div>
 
+  <!-- Data Logger Table -->
+  <div class="table-area">
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Time</th>
+          <th>Angle (°)</th>
+          <th>Direction</th>
+          <th>Light (lux)</th>
+        </tr>
+      </thead>
+      <tbody id="logTable"></tbody>
+    </table>
+  </div>
+
   <div class="footer">Solar Tracking Project • Team Starboy</div>
 </div>
 
 <script>
-setTimeout(()=>{document.getElementById("splash").style.display="none";},2000);
+setTimeout(()=>{splash.style.display="none";},2000);
 
-// Clock + Date
+// Clock
 function updateTime(){
   const now=new Date();
-  document.getElementById("timeText").innerText=now.toLocaleTimeString();
-  document.getElementById("dateText").innerText=now.toLocaleDateString();
+  timeText.innerText=now.toLocaleTimeString();
+  dateText.innerText=now.toLocaleDateString();
 }
 setInterval(updateTime,1000);
 
 let angle=0;
 let auto=false;
 let interval;
+let logCount=0;
 const MAX_LUX=900000;
 
-function getDirection(angle){
-  let a=(angle%360+360)%360;
+function getDirection(a){
+  a=(a%360+360)%360;
   if(a>=45 && a<135) return "East";
   if(a>=135 && a<225) return "South";
   if(a>=225 && a<315) return "West";
@@ -235,8 +276,11 @@ function update(){
   lightText.innerText=lux+" lux";
   lightBar.style.width=(lux/MAX_LUX*100)+"%";
 
-  dirText.innerText=getDirection(angle);
+  let dir=getDirection(angle);
+  dirText.innerText=dir;
+
   addData(lux);
+  addLog(lux,dir);
 }
 
 function rotateLeft(){angle-=10;update();}
@@ -265,6 +309,21 @@ function addData(val){
   chart.data.labels.push("");
   chart.data.datasets[0].data.push(val);
   chart.update();
+}
+
+// Data Logger
+function addLog(lux,dir){
+  logCount++;
+  const now=new Date();
+  const row=document.createElement("tr");
+  row.innerHTML=`
+    <td>${logCount}</td>
+    <td>${now.toLocaleTimeString()}</td>
+    <td>${angle}</td>
+    <td>${dir}</td>
+    <td>${lux}</td>
+  `;
+  logTable.prepend(row);
 }
 </script>
 
