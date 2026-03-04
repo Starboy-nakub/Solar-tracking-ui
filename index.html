@@ -42,7 +42,6 @@ body{
 }
 .subheader{font-size:14px}
 
-/* Layout */
 .main{
   display:flex;
   gap:20px;
@@ -62,11 +61,30 @@ body{
   border-radius:50%;
   border:3px solid cyan;
   box-shadow:0 0 25px cyan;
+  position:relative;
+  overflow:hidden;
   background:
     radial-gradient(circle at center, rgba(0,255,255,0.15), transparent 70%),
     repeating-radial-gradient(circle at center, rgba(0,255,255,0.2) 0 2px, transparent 2px 40px);
-  position:relative;
 }
+
+/* Radar sweep */
+.sweep{
+  position:absolute;
+  width:50%;
+  height:50%;
+  background:linear-gradient(45deg, rgba(0,255,255,0.4), transparent);
+  top:50%;
+  left:50%;
+  transform-origin:0% 0%;
+  animation:spin 4s linear infinite;
+}
+
+@keyframes spin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+
 .panel::before,.panel::after{
   content:"";
   position:absolute;
@@ -94,12 +112,12 @@ body{
   transform-origin:-70px center;
 }
 
-/* Right side */
+/* Right */
 .right{flex:2;}
 
 .cards{
   display:grid;
-  grid-template-columns:1fr 1fr;
+  grid-template-columns:1fr 1fr 1fr;
   gap:10px;
 }
 .card{
@@ -158,7 +176,6 @@ th{
   background:#022c44;
 }
 
-/* Footer */
 .footer{
   text-align:center;
   font-size:12px;
@@ -192,6 +209,7 @@ th{
     <!-- Radar -->
     <div class="panel-area">
       <div class="panel" id="panel">
+        <div class="sweep"></div>
         <div class="sun" id="sun">☀</div>
         <div class="dir north">N</div>
         <div class="dir east">E</div>
@@ -205,19 +223,17 @@ th{
       <div class="cards">
         <div class="card">Date<br><b id="dateText"></b></div>
         <div class="card">Time<br><b id="timeText"></b></div>
+        <div class="card">Sun Position<br><b id="sunPosText">0°</b></div>
+
         <div class="card">Angle<br><b id="angleText">0°</b></div>
         <div class="card">Direction<br><b id="dirText">North</b></div>
-
-        <div class="card">
-          Light<br><b id="lightText">0 lux</b>
+        <div class="card">Light<br><b id="lightText">0 lux</b>
           <div class="progress"><div class="bar" id="lightBar"></div></div>
         </div>
 
-        <div class="card">Peak Record Lux<br><b id="peakLux">0 lux</b></div>
-
-        <div class="card">Sun Position<br><b id="sunPosText">(0 , 0)</b></div>
-
-        <div class="card">Voltage<br><b>12.5 V</b></div>
+        <div class="card">Peak Lux Max<br><b id="peakLuxText">0 lux</b></div>
+        <div class="card">Sunrise<br><b id="sunriseText">--:--</b></div>
+        <div class="card">Sunset<br><b id="sunsetText">--:--</b></div>
       </div>
 
       <canvas id="chart" height="120"></canvas>
@@ -230,7 +246,7 @@ th{
     </div>
   </div>
 
-  <!-- Data Logger Table -->
+  <!-- Data Logger -->
   <div class="table-area">
     <table>
       <thead>
@@ -264,8 +280,24 @@ let angle=0;
 let auto=false;
 let interval;
 let logCount=0;
+let peakLux=0;
 const MAX_LUX=900000;
-let peakLuxValue=0;
+
+// GPS Sunrise Sunset
+if(navigator.geolocation){
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude;
+    const lng=pos.coords.longitude;
+    fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lng}&formatted=0`)
+      .then(res=>res.json())
+      .then(data=>{
+        const sunrise=new Date(data.results.sunrise);
+        const sunset=new Date(data.results.sunset);
+        sunriseText.innerText=sunrise.toLocaleTimeString();
+        sunsetText.innerText=sunset.toLocaleTimeString();
+      });
+  });
+}
 
 function getDirection(a){
   a=(a%360+360)%360;
@@ -279,26 +311,19 @@ function update(){
   panel.style.transform="rotate("+angle+"deg)";
   sun.style.transform="rotate("+angle+"deg)";
   angleText.innerText=angle+"°";
+  sunPosText.innerText=((angle%360+360)%360)+"°";
 
   let lux=Math.floor((Math.abs(angle)%360)/360*MAX_LUX);
   lightText.innerText=lux+" lux";
   lightBar.style.width=(lux/MAX_LUX*100)+"%";
 
+  if(lux>peakLux){
+    peakLux=lux;
+    peakLuxText.innerText=peakLux+" lux";
+  }
+
   let dir=getDirection(angle);
   dirText.innerText=dir;
-
-  // Sun Position (X,Y)
-  const radius = 70;
-  const rad = angle * Math.PI / 180;
-  const x = Math.round(Math.cos(rad) * radius);
-  const y = Math.round(Math.sin(rad) * radius);
-  sunPosText.innerText = `(${x} , ${y})`;
-
-  // Peak record
-  if(lux > peakLuxValue){
-    peakLuxValue = lux;
-    peakLux.innerText = peakLuxValue + " lux";
-  }
 
   addData(lux);
   addLog(lux,dir);
@@ -311,7 +336,7 @@ function autoRotate(){
   if(auto){
     clearInterval(interval);
     auto=false;
-  } else {
+  }else{
     auto=true;
     interval=setInterval(()=>{angle+=5;update();},500);
   }
@@ -320,15 +345,7 @@ function autoRotate(){
 // Chart
 const chart=new Chart(document.getElementById("chart"),{
   type:"line",
-  data:{
-    labels:[],
-    datasets:[{
-      label:"Light (lux)",
-      data:[],
-      borderColor:"cyan",
-      tension:0.3
-    }]
-  },
+  data:{labels:[],datasets:[{label:"Light (lux)",data:[],borderColor:"cyan",tension:0.3}]},
   options:{scales:{y:{min:0,max:900000}}}
 });
 
