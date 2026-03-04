@@ -141,7 +141,7 @@ canvas#stars{
 }
 .bar{
   height:100%;
-  width:50%;
+  width:0%;
   background:cyan;
 }
 
@@ -174,7 +174,6 @@ button{
   color:#94a3b8;
 }
 
-/* Responsive */
 @media (max-width:768px){
   .main{flex-direction:column;}
   .controls{grid-template-columns:1fr 1fr;}
@@ -217,7 +216,7 @@ button{
       <div class="cards">
         <div class="card">Angle<br><b id="angleText">0°</b></div>
         <div class="card">
-          Light<br><b id="lightText">50%</b>
+          Light<br><b id="lightText">0 lux</b>
           <div class="progress"><div class="bar" id="lightBar"></div></div>
         </div>
         <div class="card">Voltage<br><b>12.5 V</b></div>
@@ -270,20 +269,26 @@ animateStars();
 let angle=0;
 let auto=false;
 let interval;
+const MAX_LUX = 900000;
 
 function update(){
   document.getElementById("panel").style.transform="rotate("+angle+"deg)";
   document.getElementById("sun").style.transform="rotate("+angle+"deg)";
   document.getElementById("angleText").innerText=angle+"°";
 
-  let light=Math.abs(angle)%100;
-  document.getElementById("lightText").innerText=light+"%";
-  document.getElementById("lightBar").style.width=light+"%";
-  addData(light);
+  let lux = Math.abs(Math.cos(angle * Math.PI / 180)) * MAX_LUX;
+  lux = Math.round(lux);
+
+  document.getElementById("lightText").innerText = lux + " lux";
+
+  let percent = (lux / MAX_LUX) * 100;
+  document.getElementById("lightBar").style.width = percent + "%";
+
+  addData(lux);
 }
 
-function rotateLeft(){angle-=10;update();}
-function rotateRight(){angle+=10;update();}
+function rotateLeft(){ angle-=10; update(); }
+function rotateRight(){ angle+=10; update(); }
 
 function autoRotate(){
   if(auto){
@@ -305,13 +310,13 @@ const chart=new Chart(ctxChart,{
   data:{
     labels:[],
     datasets:[{
-      label:"Light %",
+      label:"Light (lux)",
       data:[],
       borderColor:"cyan",
       tension:0.3
     }]
   },
-  options:{scales:{y:{min:0,max:100}}}
+  options:{scales:{y:{min:0,max:900000}}}
 });
 
 function addData(val){
