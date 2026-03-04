@@ -18,8 +18,6 @@ canvas#stars{
   top:0;left:0;
   z-index:-1;
 }
-
-/* Splash */
 #splash{
   position:fixed;
   top:0;left:0;
@@ -32,8 +30,6 @@ canvas#stars{
   align-items:center;
   z-index:9999;
 }
-
-/* App */
 .app{
   width:90%;
   max-width:1000px;
@@ -42,9 +38,7 @@ canvas#stars{
   background:#020617;
   border-radius:25px;
   box-shadow:0 0 30px cyan;
-  overflow:hidden;
 }
-
 .header{
   text-align:center;
   padding:12px;
@@ -55,7 +49,6 @@ canvas#stars{
 }
 .subheader{font-size:14px}
 
-/* Main layout */
 .main{
   display:flex;
   gap:20px;
@@ -81,76 +74,62 @@ canvas#stars{
   position:relative;
   transition:0.5s;
 }
-
-/* cross lines */
 .panel::before,
 .panel::after{
   content:"";
   position:absolute;
   background:rgba(0,255,255,0.4);
 }
-.panel::before{width:100%;height:1px;top:50%;left:0;}
-.panel::after{height:100%;width:1px;left:50%;top:0;}
+.panel::before{width:100%;height:1px;top:50%;}
+.panel::after{height:100%;width:1px;left:50%;}
 
 /* Directions */
 .dir{
   position:absolute;
   font-weight:bold;
   color:cyan;
-  text-shadow:0 0 5px cyan;
 }
 .north{ top:5px; left:50%; transform:translateX(-50%); }
 .south{ bottom:5px; left:50%; transform:translateX(-50%); }
 .east{ right:5px; top:50%; transform:translateY(-50%); }
 .west{ left:5px; top:50%; transform:translateY(-50%); }
 
-/* Sun icon */
 .sun{
   position:absolute;
   top:50%;
   left:50%;
-  font-size:26px;
+  font-size:28px;
   color:gold;
-  text-shadow:0 0 10px gold;
-  transform-origin: -70px center;
+  transform-origin:-70px center;
 }
 
-/* Right side */
 .right{ flex:2; }
 
-/* Cards */
 .cards{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:10px;
-  margin-bottom:10px;
 }
 .card{
   border:1px solid cyan;
   border-radius:12px;
   padding:10px;
   text-align:center;
-  box-shadow:0 0 10px cyan;
 }
 .progress{
   width:100%;
   height:10px;
-  background:#020617;
-  border-radius:10px;
   border:1px solid cyan;
 }
 .bar{
   height:100%;
-  width:0%;
   background:cyan;
 }
 
-/* Controls */
 .controls{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
   gap:10px;
-  margin-top:10px;
 }
 button{
   padding:12px;
@@ -159,25 +138,16 @@ button{
   font-weight:bold;
   cursor:pointer;
   background:cyan;
-  box-shadow:0 0 10px cyan;
 }
 .auto{
   grid-column:span 3;
   background:gold;
-  box-shadow:0 0 10px gold;
 }
-
 .footer{
   text-align:center;
   font-size:12px;
   padding:8px;
   color:#94a3b8;
-}
-
-@media (max-width:768px){
-  .main{flex-direction:column;}
-  .controls{grid-template-columns:1fr 1fr;}
-  .auto{grid-column:span 2;}
 }
 </style>
 </head>
@@ -188,10 +158,7 @@ button{
   <h1>☀ SOLAR TRACKING</h1>
   <h3>RITTIYAWANNALAI</h3>
   <h3>Team Starboy ⭐</h3>
-  <p>Loading...</p>
 </div>
-
-<canvas id="stars"></canvas>
 
 <div class="app">
   <div class="header">
@@ -200,7 +167,6 @@ button{
   </div>
 
   <div class="main">
-    <!-- Radar -->
     <div class="panel-area">
       <div class="panel" id="panel">
         <div class="sun" id="sun">☀</div>
@@ -211,16 +177,16 @@ button{
       </div>
     </div>
 
-    <!-- Right -->
     <div class="right">
       <div class="cards">
+        <div class="card">Date<br><b id="dateText"></b></div>
+        <div class="card">Time<br><b id="timeText"></b></div>
         <div class="card">Angle<br><b id="angleText">0°</b></div>
-        <div class="card">
-          Light<br><b id="lightText">0 lux</b>
+        <div class="card">Direction<br><b id="dirText">North</b></div>
+        <div class="card">Light<br><b id="lightText">0 lux</b>
           <div class="progress"><div class="bar" id="lightBar"></div></div>
         </div>
         <div class="card">Voltage<br><b>12.5 V</b></div>
-        <div class="card">Current<br><b>1.8 A</b></div>
       </div>
 
       <canvas id="chart" height="120"></canvas>
@@ -237,90 +203,62 @@ button{
 </div>
 
 <script>
-// Splash
-setTimeout(()=>{
-  document.getElementById("splash").style.display="none";
-},2000);
+setTimeout(()=>{document.getElementById("splash").style.display="none";},2000);
 
-// Stars
-const canvas=document.getElementById("stars");
-const ctx=canvas.getContext("2d");
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
-let stars=[];
-for(let i=0;i<120;i++){
-  stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*2});
+// Clock + Date
+function updateTime(){
+  const now=new Date();
+  document.getElementById("timeText").innerText=now.toLocaleTimeString();
+  document.getElementById("dateText").innerText=now.toLocaleDateString();
 }
-function animateStars(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="white";
-  stars.forEach(s=>{
-    ctx.beginPath();
-    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    ctx.fill();
-    s.y+=0.3;
-    if(s.y>canvas.height) s.y=0;
-  });
-  requestAnimationFrame(animateStars);
-}
-animateStars();
+setInterval(updateTime,1000);
 
-// Control
 let angle=0;
 let auto=false;
 let interval;
-const MAX_LUX = 900000;
+const MAX_LUX=900000;
+
+function getDirection(angle){
+  let a=(angle%360+360)%360;
+  if(a>=45 && a<135) return "East";
+  if(a>=135 && a<225) return "South";
+  if(a>=225 && a<315) return "West";
+  return "North";
+}
 
 function update(){
-  document.getElementById("panel").style.transform="rotate("+angle+"deg)";
-  document.getElementById("sun").style.transform="rotate("+angle+"deg)";
-  document.getElementById("angleText").innerText=angle+"°";
+  panel.style.transform="rotate("+angle+"deg)";
+  sun.style.transform="rotate("+angle+"deg)";
+  angleText.innerText=angle+"°";
 
-  let lux = Math.abs(Math.cos(angle * Math.PI / 180)) * MAX_LUX;
-  lux = Math.round(lux);
+  let lux=Math.floor((Math.abs(angle)%360)/360*MAX_LUX);
+  lightText.innerText=lux+" lux";
+  lightBar.style.width=(lux/MAX_LUX*100)+"%";
 
-  document.getElementById("lightText").innerText = lux + " lux";
-
-  let percent = (lux / MAX_LUX) * 100;
-  document.getElementById("lightBar").style.width = percent + "%";
-
+  dirText.innerText=getDirection(angle);
   addData(lux);
 }
 
-function rotateLeft(){ angle-=10; update(); }
-function rotateRight(){ angle+=10; update(); }
+function rotateLeft(){angle-=10;update();}
+function rotateRight(){angle+=10;update();}
 
 function autoRotate(){
-  if(auto){
-    clearInterval(interval);
-    auto=false;
-  }else{
+  if(auto){clearInterval(interval);auto=false;}
+  else{
     auto=true;
-    interval=setInterval(()=>{
-      angle+=5;
-      update();
-    },500);
+    interval=setInterval(()=>{angle+=5;update();},500);
   }
 }
 
 // Chart
-const ctxChart=document.getElementById("chart").getContext("2d");
-const chart=new Chart(ctxChart,{
+const chart=new Chart(document.getElementById("chart"),{
   type:"line",
-  data:{
-    labels:[],
-    datasets:[{
-      label:"Light (lux)",
-      data:[],
-      borderColor:"cyan",
-      tension:0.3
-    }]
-  },
+  data:{labels:[],datasets:[{label:"Light (lux)",data:[],borderColor:"cyan",tension:0.3}]},
   options:{scales:{y:{min:0,max:900000}}}
 });
 
 function addData(val){
-  if(chart.data.labels.length>10){
+  if(chart.data.labels.length>12){
     chart.data.labels.shift();
     chart.data.datasets[0].data.shift();
   }
