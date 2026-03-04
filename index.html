@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Solar Tracking UI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #0f172a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .app {
+      width: 360px;
+      background: #ffffff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #ff9800, #ffc107);
+      padding: 15px;
+      text-align: center;
+      color: white;
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .status {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+
+    .status span {
+      color: #f44336;
+      font-weight: bold;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .card h2 {
+      margin: 5px 0;
+      color: #0f172a;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    button {
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .on { background: #22c55e; color: white; }
+    .off { background: #ef4444; color: white; }
+    .left { background: #3b82f6; color: white; }
+    .right { background: #3b82f6; color: white; }
+    .auto { 
+      background: #f59e0b; 
+      color: white; 
+      grid-column: span 2; 
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="header">☀ Solar Tracking System</div>
+
+    <div class="content">
+      <div class="status">
+        System Status: <span>OFF</span>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          Light Sensor
+          <h2>---</h2>
+        </div>
+        <div class="card">
+          Voltage
+          <h2>---</h2>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="on">ON</button>
+        <button class="off">OFF</button>
+        <button class="left">⬅ Left</button>
+        <button class="right">Right ➡</button>
+        <button class="auto">AUTO MODE</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
